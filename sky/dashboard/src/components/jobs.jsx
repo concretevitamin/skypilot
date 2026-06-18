@@ -388,6 +388,8 @@ export function ManagedJobs() {
         setLoading={setLoading}
         refreshDataRef={jobsRefreshRef}
         filters={filters}
+        setFilters={setFilters}
+        updateURLParams={updateURLParams}
         onRefresh={handleRefresh}
         poolsData={poolsData}
         poolsLoading={poolsLoading}
@@ -413,6 +415,8 @@ export function ManagedJobsTable({
   setLoading,
   refreshDataRef,
   filters,
+  setFilters,
+  updateURLParams,
   onRefresh,
   poolsData,
   poolsLoading,
@@ -867,6 +871,35 @@ export function ManagedJobsTable({
     [sortConfig]
   );
 
+  // Clicking a username on the Jobs page adds it as a filter (instead of
+  // navigating to the user's page). Mirrors what selecting a user in the
+  // filter dropdown does.
+  const handleUserFilterClick = React.useCallback(
+    (username) => {
+      if (!username || !setFilters) {
+        return;
+      }
+      setFilters((prevFilters) => {
+        const alreadyFiltered = prevFilters.some(
+          (f) =>
+            (f.property || '').toLowerCase() === 'user' && f.value === username
+        );
+        if (alreadyFiltered) {
+          return prevFilters;
+        }
+        const updatedFilters = [
+          ...prevFilters,
+          { property: 'User', operator: ':', value: username },
+        ];
+        if (updateURLParams) {
+          updateURLParams(updatedFilters);
+        }
+        return updatedFilters;
+      });
+    },
+    [setFilters, updateURLParams]
+  );
+
   // Calculate active and finished counts
   const counts = React.useMemo(() => {
     const safeData = data || [];
@@ -1228,7 +1261,11 @@ export function ManagedJobsTable({
         ),
         renderCell: (item) => (
           <TableCell>
-            <UserDisplay username={item.user} userHash={item.user_hash} />
+            <UserDisplay
+              username={item.user}
+              userHash={item.user_hash}
+              onClick={handleUserFilterClick}
+            />
           </TableCell>
         ),
       },
@@ -1562,6 +1599,7 @@ export function ManagedJobsTable({
     [
       requestSort,
       getSortDirection,
+      handleUserFilterClick,
       shouldShowWorkspace,
       shouldShowPool,
       expandedRowId,

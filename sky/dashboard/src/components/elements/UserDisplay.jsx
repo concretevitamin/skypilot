@@ -21,6 +21,9 @@ const ServiceAccountBadge = () => (
  * @param {string} [props.className] - Additional CSS classes for the container
  * @param {string} [props.linkClassName] - Additional CSS classes for the link
  * @param {boolean} [props.showBadge=true] - Whether to show the SA badge for service accounts
+ * @param {Function} [props.onClick] - When provided, clicking the username invokes this
+ *   callback (with the username) instead of navigating to the user's page. Used to
+ *   turn the username into a filter, e.g. on the Jobs page.
  */
 export const UserDisplay = ({
   username,
@@ -28,15 +31,27 @@ export const UserDisplay = ({
   className = 'flex items-center gap-1',
   linkClassName = 'text-gray-700 hover:text-blue-600 hover:underline',
   showBadge = true,
+  onClick = null,
 }) => {
   const isServiceAcc = isServiceAccount(userHash);
   const userUrl = getUserLink(userHash);
 
   return (
     <div className={className}>
-      <Link href={userUrl} className={linkClassName}>
-        {username}
-      </Link>
+      {onClick ? (
+        <button
+          type="button"
+          onClick={() => onClick(username)}
+          className={`${linkClassName} bg-transparent border-none p-0 cursor-pointer text-left`}
+          title={`Filter by ${username}`}
+        >
+          {username}
+        </button>
+      ) : (
+        <Link href={userUrl} className={linkClassName}>
+          {username}
+        </Link>
+      )}
       {showBadge && isServiceAcc && <ServiceAccountBadge />}
     </div>
   );
@@ -48,6 +63,7 @@ UserDisplay.propTypes = {
   className: PropTypes.string,
   linkClassName: PropTypes.string,
   showBadge: PropTypes.bool,
+  onClick: PropTypes.func,
 };
 
 export default UserDisplay;
